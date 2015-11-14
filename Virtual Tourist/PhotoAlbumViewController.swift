@@ -19,6 +19,8 @@ class PhotoAlbumViewController: UIViewController {
     
     let collectionViewHeaderReuseID = "identifier"
     
+    var totalPages = 2
+    
     var insertedIndexPaths: [NSIndexPath]!
     var deletedIndexPaths: [NSIndexPath]!
     var updatedIndexPaths: [NSIndexPath]!
@@ -40,14 +42,16 @@ class PhotoAlbumViewController: UIViewController {
     
     func fetchImagesForPin() {
         newCollectionButton.enabled = false
-        APIClient.sharedInstance().searchImageByLatitude(pin.latitude, longitude: pin.longitude) { result, error in
+        APIClient.sharedInstance.searchImageByLatitude(pin.latitude, longitude: pin.longitude, totalPages: totalPages) { result, error in
             guard error == nil, let result = result else {
                 return
             }
             guard let dictionary = result["photos"] as? [String: AnyObject],
-                photos = dictionary["photo"] as? [[String: AnyObject]] else {
+                photos = dictionary["photo"] as? [[String: AnyObject]],
+                totalPages = dictionary["pages"] as? Int else {
                     return
             }
+            self.totalPages = totalPages
             dispatch_async(dispatch_get_main_queue()) { Void in
                 _ = photos.map {
                     let photo = Photo(dictionary: $0, context: self.sharedContext)
@@ -179,7 +183,7 @@ extension PhotoAlbumViewController: UICollectionViewDataSource, UICollectionView
         } else if photo.image != nil {
             placeHolderImage = photo.image
         } else {
-            cell.taskToCancelifCellIsReused = APIClient.sharedInstance().fetchImageWithURL(photo.imageURL) { data, error in
+            cell.taskToCancelifCellIsReused = APIClient.sharedInstance.fetchImageWithURL(photo.imageURL) { data, error in
                 guard error == nil, let data = data else {
                     print("Poster download error: \(error!.localizedDescription)")
                     return

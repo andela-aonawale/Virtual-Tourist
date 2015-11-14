@@ -19,16 +19,12 @@ class APIClient {
         static let SAFE_SEARCH = "1"
         static let NO_JSON_CALLBACK = "1"
         static let PATH = "/services/rest/"
+        static let PER_PAGE = "20"
     }
     
     // MARK: - Shared Instance
     
-    class func sharedInstance() -> APIClient {
-        struct Singleton {
-            static var sharedInstance = APIClient()
-        }
-        return Singleton.sharedInstance
-    }
+    static let sharedInstance = APIClient()
     
     private func queryItemsFromDictionary(dictionary: [String: String]) -> [NSURLQueryItem] {
         return dictionary.map() {
@@ -64,9 +60,12 @@ class APIClient {
         return task
     }
     
-    func searchImageByLatitude(latitude: Double, longitude: Double, completionHandler: CompletionHandler) -> NSURLSessionDataTask {
+    func searchImageByLatitude(latitude: Double, longitude: Double, totalPages: Int, completionHandler: CompletionHandler) -> NSURLSessionDataTask {
         let URLComponents = NSURLComponents(string: Flickr.BASE_URL)!
         URLComponents.path = Flickr.PATH
+        
+        let randomPage = Int(arc4random_uniform(UInt32(totalPages))) + 1
+        print(totalPages)
         let dictionary = [
             "method": Flickr.METHOD_NAME,
             "api_key": Flickr.API_KEY,
@@ -75,7 +74,9 @@ class APIClient {
             "format": Flickr.DATA_FORMAT,
             "nojsoncallback": Flickr.NO_JSON_CALLBACK,
             "lat": "\(latitude)",
-            "lon": "\(longitude)"
+            "lon": "\(longitude)",
+            "per_page": Flickr.PER_PAGE,
+            "page": "\(randomPage)"
         ]
         URLComponents.queryItems = queryItemsFromDictionary(dictionary)
         let request = NSURLRequest(URL: URLComponents.URL!)

@@ -62,10 +62,11 @@ class TravelLocationsMapViewController: UIViewController {
     }
     
     func prefetchImagesForPin(pin: Pin) {
-        APIClient.sharedInstance().searchImageByLatitude(pin.latitude, longitude: pin.longitude) { result, error in
+        APIClient.sharedInstance.searchImageByLatitude(pin.latitude, longitude: pin.longitude, totalPages: 1) { result, error in
             guard error == nil, let result = result else {
                 return
             }
+            print(result)
             guard let dictionary = result["photos"] as? [String: AnyObject],
                 photos = dictionary["photo"] as? [[String: AnyObject]] else {
                     return
@@ -93,6 +94,10 @@ class TravelLocationsMapViewController: UIViewController {
         let latitude = defaults.doubleForKey("latitude")
         let longitude = defaults.doubleForKey("longitude")
         let altitude = defaults.doubleForKey("altitude")
+        let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        if !CLLocationCoordinate2DIsValid(coordinate) || altitude < 1 {
+            return
+        }
         let camera = MKMapCamera()
         camera.centerCoordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
         camera.altitude = altitude
@@ -107,25 +112,6 @@ class TravelLocationsMapViewController: UIViewController {
         } else {
             resumeMapViewState()
         }
-    }
-    
-    func applicationDidEnterBackground() {
-        saveMapViewState()
-    }
-    
-    func applicationWillTerminate() {
-        saveMapViewState()
-    }
-    
-    private func subscribeToBackgroundNotifications() {
-        NSNotificationCenter.defaultCenter().addObserver(self,
-            selector: "applicationDidEnterBackground",
-            name: UIApplicationDidEnterBackgroundNotification,
-            object: nil)
-        NSNotificationCenter.defaultCenter().addObserver(self,
-            selector: "applicationWillTerminate",
-            name: UIApplicationWillTerminateNotification,
-            object: nil)
     }
     
     func fetchSavedPins() {
@@ -163,7 +149,6 @@ class TravelLocationsMapViewController: UIViewController {
         let gesture = UILongPressGestureRecognizer(target: self, action: "handleLongPress:")
         mapView.addGestureRecognizer(gesture)
         mapView.delegate = self
-        subscribeToBackgroundNotifications()
         handleFirstTime()
         fetchSavedPins()
     }
@@ -177,6 +162,10 @@ class TravelLocationsMapViewController: UIViewController {
 // MARK: - MapView Delegate
 
 extension TravelLocationsMapViewController: MKMapViewDelegate {
+    
+    func mapView(mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+        saveMapViewState()
+    }
 
     func mapView(mapView: MKMapView, didSelectAnnotationView view: MKAnnotationView) {
         mapView.deselectAnnotation(view.annotation, animated: true)

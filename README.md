@@ -5,7 +5,7 @@ Virtual-Tourist is an iOS app that allows user to downloads and stores images fr
 
 ## Getting started
 1. Clone the sample app repository to your computer.
-2. Double click on GeoMinders.xcodeproj to launch XCode.
+2. Double click on Virtual Tourist.xcodeproj to launch XCode.
 3. Choose the application target and run!
 
 ## Build Requirements
